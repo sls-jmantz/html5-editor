@@ -23,6 +23,39 @@ local storage; use **Copy HTML** to export it.
 The preview isolates authored CSS and disables scripts. Export preserves authored
 markup; the editing sandbox does not sanitize exported HTML.
 
+## Cloudflare Pages
+
+Connect this repository in **Workers & Pages → Create application → Pages →
+Connect to Git** and use:
+
+| Setting | Value |
+| --- | --- |
+| Project name | `html5-editor` |
+| Production branch | `main` |
+| Framework preset | None |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | Repository root |
+
+Node.js 24 is selected by `.node-version`. The build copies only the four runtime
+assets into `dist/`; no server, Functions, database, or environment secrets are
+required. Pages installs npm dependencies during the build.
+
+For local Pages preview or command-line deployment:
+
+```sh
+npm ci
+npm run preview       # Local Pages preview at http://localhost:8788
+npx wrangler login   # Authenticate once for deployment
+npm run deploy       # Build and upload to the html5-editor Pages project
+```
+
+For a new Direct Upload project, first run
+`npx wrangler pages project create html5-editor --production-branch main` after
+logging in. If using a different project name, update `name` in `wrangler.jsonc`.
+You can also run `npm run build` and upload the generated `dist/` folder through
+the Pages dashboard's Direct Upload flow.
+
 ## Development checks
 
 With Node.js 24 or another version supported by jsdom:
@@ -35,5 +68,5 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The browser tests start their own server. To use an installed Chromium, set
+The browser tests build and serve the deployment assets in `dist/`. To use an installed Chromium, set
 `CHROMIUM_EXECUTABLE=/path/to/chromium` when running `npm run test:browser`.

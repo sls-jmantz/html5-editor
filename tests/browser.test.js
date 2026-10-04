@@ -15,7 +15,7 @@ before(async () => {
       return;
     }
     response.setHeader('Content-Type', path.endsWith('.js') ? 'text/javascript' : path.endsWith('.css') ? 'text/css' : 'text/html');
-    response.end(await readFile(new URL(`../${path}`, import.meta.url)));
+    response.end(await readFile(new URL(`../dist/${path}`, import.meta.url)));
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   url = `http://127.0.0.1:${server.address().port}`;
