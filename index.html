@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML5 Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">HTML5 Editor</p>
+        <h1>Visual Text Editor</h1>
+        <p class="subtitle">Write and style content with familiar toolbar controls.</p>
+        <p class="meta" id="save-status">Saved locally</p>
+      </div>
+      <div class="header-actions">
+        <button id="copy-html" class="btn">Copy HTML</button>
+        <button id="clear-editor" class="btn btn-danger">Clear</button>
+      </div>
+    </header>
+
+    <section class="toolbar" aria-label="Formatting tools">
+      <div class="tool-section">
+        <p class="tool-title">Editor</p>
+        <label class="toggle-wrap" for="wrap-toggle">
+          <input id="wrap-toggle" type="checkbox" checked>
+          Wrap HTML
+        </label>
+      </div>
+
+      <div class="tool-section">
+        <p class="tool-title">Insert</p>
+        <div class="group" role="group" aria-label="Insert tools">
+          <button id="add-link" title="Add link (Ctrl/Cmd+K)">Link</button>
+          <button id="remove-link">Unlink</button>
+          <button id="add-image">Image</button>
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <p class="tool-title">History</p>
+        <div class="group" role="group" aria-label="Editing history">
+          <button data-cmd="undo">Undo</button>
+          <button data-cmd="redo">Redo</button>
+          <button data-cmd="removeFormat">Clear Format</button>
+        </div>
+      </div>
+
+      <div class="tool-section">
+        <p class="tool-title">Typography</p>
+        <label class="field">
+          <span>Block</span>
+          <select id="block-type">
+            <option value="P">Paragraph</option>
+            <option value="H1">Heading 1</option>
+            <option value="H2">Heading 2</option>
+            <option value="H3">Heading 3</option>
+            <option value="BLOCKQUOTE">Quote</option>
+            <option value="PRE">Code Block</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Font</span>
+          <select id="font-family">
+            <option value="">Default</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Size</span>
+          <select id="font-size">
+            <option value="">Default</option>
+            <option value="2">Small</option>
+            <option value="3">Normal</option>
+            <option value="4">Medium</option>
+            <option value="5">Large</option>
+            <option value="6">XL</option>
+          </select>
+        </label>
+
+        <div class="field size-custom">
+          <span>Custom Size</span>
+          <div class="size-row">
+            <input id="custom-size-value" type="number" min="1" step="0.5" value="16" aria-label="Custom font size value">
+            <select id="custom-size-unit" aria-label="Custom font size unit">
+              <option value="px">px</option>
+              <option value="rem">rem</option>
+              <option value="em">em</option>
+              <option value="%">%</option>
+              <option value="pt">pt</option>
+            </select>
+            <button id="apply-custom-size" type="button">Apply</button>
+          </div>
+        </div>
+
+        <div class="group" role="group" aria-label="Text styles">
+          <button data-cmd="bold" title="Bold (Ctrl/Cmd+B)"><strong>B</strong></button>
+          <button data-cmd="italic" title="Italic (Ctrl/Cmd+I)"><em>I</em></button>
+          <button data-cmd="underline" title="Underline (Ctrl/Cmd+U)"><u>U</u></button>
+          <button data-cmd="strikeThrough" title="Strike">S</button>
+        </div>
+
+        <div class="group" role="group" aria-label="Lists and layout">
+          <button data-cmd="insertUnorderedList" title="Bullets">Bullets</button>
+          <button data-cmd="insertOrderedList" title="Numbers">Numbers</button>
+          <button data-cmd="justifyLeft" title="Align left">Left</button>
+          <button data-cmd="justifyCenter" title="Align center">Center</button>
+          <button data-cmd="justifyRight" title="Align right">Right</button>
+        </div>
+
+        <label class="field color-field">
+          <span>Text</span>
+          <input id="text-color" type="color" value="#1f2937" aria-label="Text color">
+          <button id="text-color-none" class="color-none-btn" type="button">None</button>
+        </label>
+
+        <label class="field color-field">
+          <span>Highlight</span>
+          <input id="bg-color" type="color" value="#fef08a" aria-label="Background color">
+          <button id="bg-color-none" class="color-none-btn" type="button">None</button>
+        </label>
+      </div>
+
+      <div class="tool-section">
+        <p class="tool-title">Image</p>
+        <div class="group image-tools" role="group" aria-label="Image tools">
+          <label class="field compact">
+            <span>Img Width</span>
+            <div class="size-row image-row">
+              <input id="image-width-value" type="number" min="1" step="1" value="100" aria-label="Image width value">
+              <select id="image-width-unit" aria-label="Image width unit">
+                <option value="%">%</option>
+                <option value="px">px</option>
+              </select>
+            </div>
+          </label>
+
+          <label class="field compact">
+            <span>Display</span>
+            <select id="image-display">
+              <option value="block">Block</option>
+              <option value="inline-block">Inline</option>
+            </select>
+          </label>
+
+          <label class="field compact">
+            <span>Align</span>
+            <select id="image-align">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+
+          <label class="field compact">
+            <span>Padding</span>
+            <input id="image-padding" type="number" min="0" step="1" value="0" aria-label="Image padding in pixels">
+          </label>
+
+          <label class="field compact">
+            <span>Radius</span>
+            <input id="image-radius" type="number" min="0" step="1" value="0" aria-label="Image corner radius in pixels">
+          </label>
+
+          <label class="field compact">
+            <span>Fit</span>
+            <select id="image-fit">
+              <option value="">Default</option>
+              <option value="contain">Contain</option>
+              <option value="cover">Cover</option>
+              <option value="fill">Fill</option>
+            </select>
+          </label>
+
+          <button id="wrap-image" type="button">Wrap In Frame</button>
+          <button id="reset-image-style" type="button">Reset Image</button>
+        </div>
+      </div>
+
+      <details class="tool-section table-section">
+        <summary class="tool-title">Table</summary>
+        <div class="group table-tools" role="group" aria-label="Table tools">
+          <button id="add-table" type="button">Insert Table</button>
+
+          <label class="field compact">
+            <span>Rows</span>
+            <input id="table-rows" type="number" min="1" max="20" step="1" value="3" aria-label="Table rows">
+          </label>
+
+          <label class="field compact">
+            <span>Cols</span>
+            <input id="table-cols" type="number" min="1" max="12" step="1" value="3" aria-label="Table columns">
+          </label>
+
+          <button id="table-add-row-above" type="button">Row Above</button>
+          <button id="table-add-row-below" type="button">Row Below</button>
+          <button id="table-add-col-left" type="button">Col Left</button>
+          <button id="table-add-col-right" type="button">Col Right</button>
+          <button id="table-delete-row" type="button">Delete Row</button>
+          <button id="table-delete-col" type="button">Delete Col</button>
+          <button id="table-delete" type="button">Delete Table</button>
+          <button id="table-merge-right" type="button">Merge Right</button>
+          <button id="table-merge-down" type="button">Merge Down</button>
+          <button id="table-split-cell" type="button">Split Cell</button>
+
+          <label class="field compact color-field">
+            <span>Cell Fill</span>
+            <input id="table-cell-bg" type="color" value="#ffffff" aria-label="Cell background color">
+            <button id="table-cell-bg-none" class="color-none-btn" type="button">None</button>
+          </label>
+
+          <label class="field compact color-field">
+            <span>Table Bg</span>
+            <input id="table-bg" type="color" value="#ffffff" aria-label="Table background color">
+            <button id="table-bg-none" class="color-none-btn" type="button">None</button>
+          </label>
+
+          <label class="field compact color-field">
+            <span>Border</span>
+            <input id="table-border-color" type="color" value="#6b7280" aria-label="Table border color">
+          </label>
+
+          <label class="field compact">
+            <span>Border px</span>
+            <input id="table-border-width" type="number" min="0" max="12" step="1" value="1" aria-label="Table border width">
+          </label>
+
+          <label class="field compact">
+            <span>Cell Pad</span>
+            <input id="table-cell-padding" type="number" min="0" max="40" step="1" value="8" aria-label="Cell padding">
+          </label>
+
+          <label class="field compact">
+            <span>Zebra</span>
+            <select id="table-zebra-mode" aria-label="Alternating row colors">
+              <option value="off">Off</option>
+              <option value="on">On</option>
+            </select>
+          </label>
+
+          <label class="field compact color-field">
+            <span>Zebra A</span>
+            <input id="table-zebra-a" type="color" value="#f8fafc" aria-label="Alternating row color A">
+          </label>
+
+          <label class="field compact color-field">
+            <span>Zebra B</span>
+            <input id="table-zebra-b" type="color" value="#e2e8f0" aria-label="Alternating row color B">
+          </label>
+
+          <button id="table-apply-style" type="button">Apply Table Style</button>
+        </div>
+      </details>
+
+    </section>
+
+    <section class="workspace">
+      <article class="panel">
+        <h2>HTML Editor</h2>
+        <textarea id="html-source" class="output source-editor" aria-label="HTML source editor" spellcheck="false"></textarea>
+      </article>
+
+      <article class="panel">
+        <h2>Live View</h2>
+        <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Rich text editor">
+          <h1>Start editing</h1>
+          <p>Use the toolbar to style this text: headings, bold, lists, colors, links, and more.</p>
+        </div>
+      </article>
+    </section>
+    <p class="shortcut-note" aria-label="Keyboard shortcuts">
+      Ctrl/Cmd+B = Bold<br>
+      Ctrl/Cmd+I = Italic<br>
+      Ctrl/Cmd+U = Underline<br>
+      Ctrl/Cmd+K = Insert link<br>
+      Ctrl/Cmd+S = Save locally<br>
+      Ctrl/Cmd+Shift+7 = Numbered list<br>
+      Ctrl/Cmd+Shift+8 = Bulleted list
+    </p>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
