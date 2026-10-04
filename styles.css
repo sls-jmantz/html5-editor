@@ -253,8 +253,28 @@ body {
   font-size: 0.68rem;
 }
 
-.image-row {
-  grid-template-columns: 66px 52px;
+.image-css-value {
+  width: 130px;
+}
+
+.image-tools input:invalid {
+  border-color: #f87171;
+}
+
+.image-advanced {
+  width: 100%;
+  min-width: 0;
+}
+
+.image-advanced > summary {
+  padding: 0.4rem;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.image-advanced > .group {
+  margin-top: 0.4rem;
 }
 
 #image-padding,

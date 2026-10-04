@@ -148,21 +148,26 @@ function moveHistory(direction) {
   const next = historyIndex + direction;
   if (next < 0 || next >= history.length) return;
   rememberSelection();
-  historyIndex = next;
-  const entry = history[next];
-  source.value = entry.html;
-  loadSource();
-  surface = entry.surface;
-  sourceSelection = [...entry.selection];
-  restoreBookmark(entry.range);
-  setTargets(fromPath(entry.image), fromPath(entry.cell));
-  if (surface === 'source') {
-    source.focus();
-    source.setSelectionRange(...sourceSelection);
-  } else editor.focus();
-  refreshControls();
-  refreshHistoryButtons();
-  queuePersist();
+  mutating = true;
+  try {
+    historyIndex = next;
+    const entry = history[next];
+    source.value = entry.html;
+    loadSource();
+    surface = entry.surface;
+    sourceSelection = [...entry.selection];
+    restoreBookmark(entry.range);
+    setTargets(fromPath(entry.image), fromPath(entry.cell));
+    if (surface === 'source') {
+      source.focus();
+      source.setSelectionRange(...sourceSelection);
+    } else editor.focus();
+    refreshControls();
+    refreshHistoryButtons();
+    queuePersist();
+  } finally {
+    mutating = false;
+  }
 }
 
 function getRange(focus = true) {
@@ -191,6 +196,7 @@ function syncSourceSelection() {
 }
 
 function change(operation, { sourceEdit = false } = {}) {
+  if (mutating) return false;
   rememberSelection();
   const before = snapshot();
   mutating = true;
@@ -438,39 +444,87 @@ function requireImage() {
   return selectedImage;
 }
 
+const imageCssFields = {
+  'image-width-value': 'width',
+  'image-height': 'height',
+  'image-min-width': 'min-width',
+  'image-max-width': 'max-width',
+  'image-min-height': 'min-height',
+  'image-max-height': 'max-height',
+  'image-margin': 'margin',
+  'image-float': 'float',
+  'image-vertical-align': 'vertical-align',
+  'image-object-position': 'object-position',
+  'image-border-width': 'border-width',
+  'image-border-style': 'border-style',
+  'image-border-color': 'border-color',
+};
+const imageAttributeFields = { 'image-alt': 'alt', 'image-title': 'title', 'image-loading': 'loading' };
+
 function syncImageControls() {
   const image = selectedImage;
-  const computed = editorWindow.getComputedStyle(image);
-  const width = (image.style.width || computed.width).match(/^([\d.]+)(px|%)$/);
-  if (width) {
-    byId('image-width-value').value = width[1];
-    byId('image-width-unit').value = width[2];
+  for (const [id, property] of Object.entries(imageCssFields)) {
+    const input = byId(id);
+    input.value = image.style.getPropertyValue(property);
+    input.setCustomValidity('');
+    input.dataset.dirty = 'false';
+    // Keep authored width/height attributes visible without converting them to CSS.
+    if (!input.value && (property === 'width' || property === 'height')) {
+      const attribute = image.getAttribute(property);
+      if (attribute && /^\d+$/.test(attribute)) input.value = `${attribute}px`;
+    }
   }
-  byId('image-display').value = (image.style.display || computed.display) === 'block' ? 'block' : 'inline-block';
+  for (const [id, attribute] of Object.entries(imageAttributeFields)) {
+    byId(id).value = image.getAttribute(attribute) || '';
+    byId(id).dataset.dirty = 'false';
+  }
+  byId('image-display').value = image.style.display;
   byId('image-padding').value = parseFloat(image.style.padding) || 0;
   byId('image-radius').value = parseFloat(image.style.borderRadius) || 0;
   byId('image-fit').value = image.style.objectFit;
+  syncImageAlignment(image);
+}
+
+function applyImageCss(id, property) {
+  const input = byId(id);
+  let value = input.value.trim();
+  if (['width', 'height', 'min-width', 'max-width', 'min-height', 'max-height', 'margin', 'border-width', 'vertical-align'].includes(property) && /^-?(?:\d+\.?\d*|\.\d+)$/.test(value)) value += 'px';
+  if (value && !editorWindow.CSS.supports(property, value)) {
+    input.setCustomValidity(`Enter a valid CSS ${property} value`);
+    status(`Invalid image ${property}: ${value}`);
+    return;
+  }
+  input.setCustomValidity('');
+  change(() => {
+    const image = requireImage();
+    if (value) image.style.setProperty(property, value);
+    else image.style.removeProperty(property);
+    input.value = image.style.getPropertyValue(property);
+    input.dataset.dirty = 'false';
+    if (property === 'margin') syncImageAlignment(image);
+  });
+}
+
+function syncImageAlignment(image) {
   byId('image-align').value = image.style.marginLeft === 'auto' ? (image.style.marginRight === 'auto' ? 'center' : 'right') : 'left';
 }
 
 function imageStyle(field) {
   change(() => {
     const image = requireImage();
-    if (field === 'width') {
-      const value = Number(byId('image-width-value').value);
-      if (!(value > 0 && Number.isFinite(value))) throw new Error('Enter a valid image width');
-      image.style.width = `${value}${byId('image-width-unit').value}`;
-      image.style.maxWidth = '100%';
-    } else if (field === 'padding') image.style.padding = `${Math.max(0, Number(byId('image-padding').value) || 0)}px`;
+    if (field === 'padding') image.style.padding = `${Math.max(0, Number(byId('image-padding').value) || 0)}px`;
     else if (field === 'radius') image.style.borderRadius = `${Math.max(0, Number(byId('image-radius').value) || 0)}px`;
     else if (field === 'fit') image.style.objectFit = byId('image-fit').value;
     else if (field === 'display') image.style.display = byId('image-display').value;
     else if (field === 'align') {
       // Automatic margins only align block images.
       image.style.display = 'block';
+      image.style.cssFloat = 'none';
+      byId('image-float').value = 'none';
       byId('image-display').value = 'block';
       image.style.marginLeft = byId('image-align').value === 'left' ? '0' : 'auto';
       image.style.marginRight = byId('image-align').value === 'right' ? '0' : 'auto';
+      byId('image-margin').value = image.style.margin;
     }
   });
 }
@@ -584,10 +638,43 @@ on('add-image', 'click', () => {
 });
 
 for (const [id, event, field] of [
-  ['image-width-value', 'input', 'width'], ['image-width-unit', 'change', 'width'],
   ['image-display', 'change', 'display'], ['image-align', 'change', 'align'],
   ['image-padding', 'input', 'padding'], ['image-radius', 'input', 'radius'], ['image-fit', 'change', 'fit'],
 ]) on(id, event, () => imageStyle(field));
+for (const [id, property] of Object.entries(imageCssFields)) {
+  on(id, 'input', () => {
+    byId(id).setCustomValidity('');
+    byId(id).dataset.dirty = 'true';
+  });
+  on(id, 'change', () => {
+    if (byId(id).dataset.dirty === 'true' && !mutating) applyImageCss(id, property);
+  });
+  on(id, 'keydown', (event) => {
+    if (event.key === 'Enter' && byId(id).tagName === 'INPUT') {
+      event.preventDefault();
+      applyImageCss(id, property);
+    }
+  });
+}
+for (const [id, attribute] of Object.entries(imageAttributeFields)) {
+  const apply = () => change(() => {
+    const image = requireImage();
+    const value = byId(id).value;
+    if (value || attribute === 'alt') image.setAttribute(attribute, value);
+    else image.removeAttribute(attribute);
+    byId(id).dataset.dirty = 'false';
+  });
+  on(id, 'input', () => { byId(id).dataset.dirty = 'true'; });
+  on(id, 'change', () => {
+    if (byId(id).dataset.dirty === 'true') apply();
+  });
+  on(id, 'keydown', (event) => {
+    if (event.key === 'Enter' && byId(id).tagName === 'INPUT') {
+      event.preventDefault();
+      apply();
+    }
+  });
+}
 on('reset-image-style', 'click', () => change(() => {
   const image = requireImage();
   image.removeAttribute('style');

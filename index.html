@@ -136,21 +136,27 @@
         <p class="tool-title">Image</p>
         <div class="group image-tools" role="group" aria-label="Image tools">
           <label class="field compact">
-            <span>Img Width</span>
-            <div class="size-row image-row">
-              <input id="image-width-value" type="number" min="1" step="1" value="100" aria-label="Image width value">
-              <select id="image-width-unit" aria-label="Image width unit">
-                <option value="%">%</option>
-                <option value="px">px</option>
-              </select>
-            </div>
+            <span>Width</span>
+            <input id="image-width-value" class="image-css-value" type="text" placeholder="auto" aria-label="Image width" title="Examples: auto, 320px, 50%, 20rem. Bare numbers use px.">
+          </label>
+
+          <label class="field compact">
+            <span>Height</span>
+            <input id="image-height" class="image-css-value" type="text" placeholder="auto" aria-label="Image height" title="Examples: auto, 240px, 15rem">
+          </label>
+
+          <label class="field compact">
+            <span>Max Width</span>
+            <input id="image-max-width" class="image-css-value" type="text" placeholder="100%" aria-label="Image maximum width" title="Examples: 100%, 640px, none">
           </label>
 
           <label class="field compact">
             <span>Display</span>
             <select id="image-display">
+              <option value="">Default</option>
               <option value="block">Block</option>
               <option value="inline-block">Inline</option>
+              <option value="inline">Inline (text)</option>
             </select>
           </label>
 
@@ -180,11 +186,95 @@
               <option value="contain">Contain</option>
               <option value="cover">Cover</option>
               <option value="fill">Fill</option>
+              <option value="none">None</option>
+              <option value="scale-down">Scale Down</option>
             </select>
           </label>
 
           <button id="wrap-image" type="button">Wrap In Frame</button>
           <button id="reset-image-style" type="button">Reset Image</button>
+
+          <details class="image-advanced">
+            <summary>More image options</summary>
+            <div class="group image-tools">
+              <label class="field compact">
+                <span>Min Width</span>
+                <input id="image-min-width" class="image-css-value" type="text" placeholder="0" aria-label="Image minimum width">
+              </label>
+              <label class="field compact">
+                <span>Min Height</span>
+                <input id="image-min-height" class="image-css-value" type="text" placeholder="0" aria-label="Image minimum height">
+              </label>
+              <label class="field compact">
+                <span>Max Height</span>
+                <input id="image-max-height" class="image-css-value" type="text" placeholder="none" aria-label="Image maximum height">
+              </label>
+              <label class="field compact">
+                <span>Margin</span>
+                <input id="image-margin" class="image-css-value" type="text" placeholder="0" aria-label="Image margin" title="Examples: 12px, 0 auto, 4px 8px 12px 16px">
+              </label>
+              <label class="field compact">
+                <span>Float</span>
+                <select id="image-float">
+                  <option value="">Default</option>
+                  <option value="none">None</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </label>
+              <label class="field compact">
+                <span>Vertical Align</span>
+                <select id="image-vertical-align">
+                  <option value="">Default</option>
+                  <option value="baseline">Baseline</option>
+                  <option value="top">Top</option>
+                  <option value="middle">Middle</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="text-top">Text Top</option>
+                  <option value="text-bottom">Text Bottom</option>
+                </select>
+              </label>
+              <label class="field compact">
+                <span>Object Position</span>
+                <input id="image-object-position" class="image-css-value" type="text" placeholder="50% 50%" aria-label="Image object position" title="Examples: center, top left, 25% 75%">
+              </label>
+              <label class="field compact">
+                <span>Border Width</span>
+                <input id="image-border-width" class="image-css-value" type="text" placeholder="0" aria-label="Image border width">
+              </label>
+              <label class="field compact">
+                <span>Border Style</span>
+                <select id="image-border-style">
+                  <option value="">Default</option>
+                  <option value="none">None</option>
+                  <option value="solid">Solid</option>
+                  <option value="dashed">Dashed</option>
+                  <option value="dotted">Dotted</option>
+                  <option value="double">Double</option>
+                </select>
+              </label>
+              <label class="field compact">
+                <span>Border Color</span>
+                <input id="image-border-color" class="image-css-value" type="text" placeholder="currentColor" aria-label="Image border color" title="Examples: #334155, red, transparent">
+              </label>
+              <label class="field compact">
+                <span>Alt Text</span>
+                <input id="image-alt" type="text" aria-label="Image alternative text" placeholder="Image description">
+              </label>
+              <label class="field compact">
+                <span>Title</span>
+                <input id="image-title" type="text" aria-label="Image title" placeholder="Optional tooltip">
+              </label>
+              <label class="field compact">
+                <span>Loading</span>
+                <select id="image-loading">
+                  <option value="">Default</option>
+                  <option value="lazy">Lazy</option>
+                  <option value="eager">Eager</option>
+                </select>
+              </label>
+            </div>
+          </details>
         </div>
       </div>
 
