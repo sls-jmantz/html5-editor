@@ -6,7 +6,25 @@ A two-pane HTML editor with editable source and a sandboxed visual preview.
 - Undo/redo across both editing surfaces and automatic local saving.
 - Copy HTML without editor selection markers.
 
-## Run
+## Deploy to Cloudflare Pages (ZIP upload)
+
+1. **[Download html5-editor-pages.zip](https://github.com/sls-jmantz/html5-editor/raw/refs/heads/main/html5-editor-pages.zip)**.
+2. In Cloudflare, open **Workers & Pages → Create application → Pages → Upload assets**.
+3. Enter a project name, upload the ZIP, and click **Deploy site**.
+
+The ZIP is ready to deploy: no Git connection, build command, npm installation,
+or environment variables are needed. It contains `index.html`, `styles.css`,
+`script.js`, and `editor-core.js` at the archive root. Use this deployment ZIP,
+not GitHub's **Code → Download ZIP** source archive.
+
+After changing the editor, regenerate the deployment ZIP with:
+
+```sh
+npm ci
+npm run package
+```
+
+## Run locally
 
 Serve this directory over HTTP; JavaScript modules require a web server:
 
@@ -22,39 +40,6 @@ local storage; use **Copy HTML** to export it.
 
 The preview isolates authored CSS and disables scripts. Export preserves authored
 markup; the editing sandbox does not sanitize exported HTML.
-
-## Cloudflare Pages
-
-Connect this repository in **Workers & Pages → Create application → Pages →
-Connect to Git** and use:
-
-| Setting | Value |
-| --- | --- |
-| Project name | `html5-editor` |
-| Production branch | `main` |
-| Framework preset | None |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Root directory | Repository root |
-
-Node.js 24 is selected by `.node-version`. The build copies only the four runtime
-assets into `dist/`; no server, Functions, database, or environment secrets are
-required. Pages installs npm dependencies during the build.
-
-For local Pages preview or command-line deployment:
-
-```sh
-npm ci
-npm run preview       # Local Pages preview at http://localhost:8788
-npx wrangler login   # Authenticate once for deployment
-npm run deploy       # Build and upload to the html5-editor Pages project
-```
-
-For a new Direct Upload project, first run
-`npx wrangler pages project create html5-editor --production-branch main` after
-logging in. If using a different project name, update `name` in `wrangler.jsonc`.
-You can also run `npm run build` and upload the generated `dist/` folder through
-the Pages dashboard's Direct Upload flow.
 
 ## Development checks
 
