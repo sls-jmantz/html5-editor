@@ -273,10 +273,7 @@
 
       <article class="panel">
         <h2>Live View</h2>
-        <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Rich text editor">
-          <h1>Start editing</h1>
-          <p>Use the toolbar to style this text: headings, bold, lists, colors, links, and more.</p>
-        </div>
+        <iframe id="editor-frame" class="editor-frame" title="Rich text editor" sandbox="allow-same-origin"></iframe>
       </article>
     </section>
     <p class="shortcut-note" aria-label="Keyboard shortcuts">
@@ -290,6 +287,6 @@
     </p>
   </main>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
