@@ -4,23 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HTML5 Editor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="app-shell">
     <header class="app-header">
-      <div>
-        <p class="eyebrow">HTML5 Editor</p>
-        <h1>Visual Text Editor</h1>
-        <p class="subtitle">Write and style content with familiar toolbar controls.</p>
-        <p class="meta" id="save-status">Saved locally</p>
+      <div class="app-identity">
+        <h1>HTML5 Editor</h1>
+        <p class="meta" id="save-status" role="status">Saved locally</p>
       </div>
       <div class="header-actions">
+        <button id="focus-mode" class="btn" type="button" aria-pressed="false" aria-controls="formatting-tools" title="Hide formatting tools for more editing space">Focus</button>
         <details class="header-shortcuts">
-          <summary>Keyboard shortcuts</summary>
+          <summary title="Keyboard shortcuts">Shortcuts</summary>
           <div class="shortcut-note" aria-label="Keyboard shortcuts">
             <span><kbd>Ctrl/Cmd+B</kbd> Bold</span>
             <span><kbd>Ctrl/Cmd+I</kbd> Italic</span>
@@ -33,22 +29,13 @@
             <span><kbd>Ctrl/Cmd+Shift+8</kbd> Bulleted list</span>
           </div>
         </details>
-        <button id="copy-html" class="btn">Copy HTML</button>
+        <button id="copy-html" class="btn btn-primary">Copy HTML</button>
         <button id="clear-editor" class="btn btn-danger">Clear</button>
       </div>
     </header>
 
-    <section class="toolbar" aria-label="Formatting tools">
-      <div class="tool-section">
-        <p class="tool-title">Editor</p>
-        <label class="toggle-wrap" for="wrap-toggle">
-          <input id="wrap-toggle" type="checkbox" checked>
-          Wrap HTML
-        </label>
-      </div>
-
-      <div class="tool-section">
-        <p class="tool-title">Insert</p>
+    <section id="formatting-tools" class="toolbar" aria-label="Formatting tools">
+      <div class="tool-section quick-tools">
         <div class="group" role="group" aria-label="Insert tools">
           <button id="add-link" title="Add link (Ctrl/Cmd+K)">Link</button>
           <button id="remove-link">Unlink</button>
@@ -56,17 +43,15 @@
         </div>
       </div>
 
-      <div class="tool-section">
-        <p class="tool-title">History</p>
+      <div class="tool-section quick-tools history-tools">
         <div class="group" role="group" aria-label="Editing history">
-          <button data-cmd="undo">Undo</button>
-          <button data-cmd="redo">Redo</button>
+          <button data-cmd="undo" class="icon-button" aria-label="Undo" title="Undo (Ctrl/Cmd+Z)">↶</button>
+          <button data-cmd="redo" class="icon-button" aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)">↷</button>
           <button data-cmd="removeFormat">Clear Format</button>
         </div>
       </div>
 
-      <div class="tool-section">
-        <p class="tool-title">Typography</p>
+      <div class="tool-section typography-tools">
         <label class="field">
           <span>Block</span>
           <select id="block-type">
@@ -114,15 +99,15 @@
               <option value="%">%</option>
               <option value="pt">pt</option>
             </select>
-            <button id="apply-custom-size" type="button">Apply</button>
+            <button id="apply-custom-size" type="button" aria-label="Apply custom font size" title="Apply custom font size">✓</button>
           </div>
         </div>
 
-        <div class="group" role="group" aria-label="Text styles">
-          <button data-cmd="bold" title="Bold (Ctrl/Cmd+B)"><strong>B</strong></button>
-          <button data-cmd="italic" title="Italic (Ctrl/Cmd+I)"><em>I</em></button>
-          <button data-cmd="underline" title="Underline (Ctrl/Cmd+U)"><u>U</u></button>
-          <button data-cmd="strikeThrough" title="Strike">S</button>
+        <div class="group text-style-tools" role="group" aria-label="Text styles">
+          <button data-cmd="bold" aria-label="Bold" title="Bold (Ctrl/Cmd+B)"><strong>B</strong></button>
+          <button data-cmd="italic" aria-label="Italic" title="Italic (Ctrl/Cmd+I)"><em>I</em></button>
+          <button data-cmd="underline" aria-label="Underline" title="Underline (Ctrl/Cmd+U)"><u>U</u></button>
+          <button data-cmd="strikeThrough" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
         </div>
 
         <div class="group" role="group" aria-label="Lists and layout">
@@ -136,19 +121,20 @@
         <label class="field color-field">
           <span>Text</span>
           <input id="text-color" type="color" value="#1f2937" aria-label="Text color">
-          <button id="text-color-none" class="color-none-btn" type="button">None</button>
+          <button id="text-color-none" class="color-none-btn" type="button" aria-label="Clear text color" title="Clear text color">×</button>
         </label>
 
         <label class="field color-field">
           <span>Highlight</span>
           <input id="bg-color" type="color" value="#fef08a" aria-label="Background color">
-          <button id="bg-color-none" class="color-none-btn" type="button">None</button>
+          <button id="bg-color-none" class="color-none-btn" type="button" aria-label="Clear highlight" title="Clear highlight">×</button>
         </label>
       </div>
 
-      <div class="tool-section">
-        <p class="tool-title">Image</p>
-        <div class="group image-tools" role="group" aria-label="Image tools">
+      <details class="tool-section image-section inspector-section" name="inspector">
+        <summary>Image settings</summary>
+        <p id="image-selection-hint" class="selection-hint">Select an image in Live View to edit its properties.</p>
+        <fieldset id="image-controls" class="group image-tools" aria-label="Image tools" disabled>
           <label class="field compact">
             <span>Width</span>
             <input id="image-width-value" class="image-css-value" type="text" placeholder="auto" aria-label="Image width" title="Examples: auto, 320px, 50%, 20rem. Bare numbers use px.">
@@ -289,11 +275,12 @@
               </label>
             </div>
           </details>
-        </div>
-      </div>
+        </fieldset>
+      </details>
 
-      <details class="tool-section table-section">
-        <summary class="tool-title">Table</summary>
+      <details class="tool-section table-section inspector-section" name="inspector">
+        <summary>Table settings</summary>
+        <p id="table-selection-hint" class="selection-hint">Insert a table, or select a cell in Live View to edit it.</p>
         <div class="group table-tools" role="group" aria-label="Table tools">
           <button id="add-table" type="button">Insert Table</button>
 
@@ -372,8 +359,11 @@
     <section id="workspace" class="workspace" aria-label="Editor workspace">
       <article id="source-panel" class="panel">
         <header class="panel-header">
-          <h2>HTML Editor</h2>
-          <button id="toggle-source-panel" class="panel-toggle" type="button" aria-label="Collapse HTML Editor" aria-expanded="true" aria-controls="source-panel-body">Collapse</button>
+          <h2><span class="panel-marker" aria-hidden="true">&lt;/&gt;</span> HTML Editor</h2>
+          <div class="panel-actions">
+            <label class="toggle-wrap" for="wrap-toggle"><input id="wrap-toggle" type="checkbox" checked> Wrap</label>
+            <button id="toggle-source-panel" class="panel-toggle" type="button" aria-label="Collapse HTML Editor" aria-expanded="true" aria-controls="source-panel-body">Collapse</button>
+          </div>
         </header>
         <div id="source-panel-body" class="panel-body">
           <textarea id="html-source" class="output source-editor" aria-label="HTML source editor" spellcheck="false"></textarea>
@@ -382,7 +372,7 @@
       <div id="pane-divider" class="pane-divider" role="separator" tabindex="0" aria-label="Resize editor panes" aria-controls="source-panel live-panel" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="52" title="Drag to resize panes. Arrow keys resize; Home/End set limits; double-click resets."></div>
       <article id="live-panel" class="panel">
         <header class="panel-header">
-          <h2>Live View</h2>
+          <h2><span class="live-dot" aria-hidden="true"></span> Live View</h2>
           <button id="toggle-live-panel" class="panel-toggle" type="button" aria-label="Collapse Live View" aria-expanded="true" aria-controls="live-panel-body">Collapse</button>
         </header>
         <div id="live-panel-body" class="panel-body">

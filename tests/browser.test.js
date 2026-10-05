@@ -441,3 +441,66 @@ test('stacked panes resize vertically and collapsed editors continue syncing', a
   assert.equal(await divider.getAttribute('aria-orientation'), 'vertical');
   assert.equal(await divider.getAttribute('aria-valuenow'), '54');
 });
+
+test('compact toolbar keeps the workspace on screen and opens only relevant settings', async (t) => {
+  const page = await pageFor(t, `<p>select here</p><p><img src="${testImage}" style="width:40px;height:30px"></p><table><tr><td>A</td></tr></table>`);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForFunction(() => {
+    const box = document.getElementById('workspace').getBoundingClientRect();
+    return box.top < 230 && box.bottom <= innerHeight;
+  });
+  assert.equal(await page.locator('.image-section').evaluate((details) => details.open), false);
+  assert.equal(await page.locator('.table-section').evaluate((details) => details.open), false);
+  assert.equal(await page.locator('#image-width-value').isDisabled(), true);
+  assert.equal(await page.locator('#table-add-row-above').isDisabled(), true);
+  await page.frameLocator('#editor-frame').locator('img').click();
+  assert.equal(await page.locator('.image-section').evaluate((details) => details.open), true);
+  assert.equal(await page.locator('#image-width-value').isDisabled(), false);
+  await page.frameLocator('#editor-frame').locator('td').click();
+  assert.equal(await page.locator('.table-section').evaluate((details) => details.open), true);
+  assert.equal(await page.locator('.image-section').evaluate((details) => details.open), false);
+  assert.equal(await page.locator('#table-add-row-above').isDisabled(), false);
+  await page.locator('.table-section > summary').click();
+  assert.equal(await page.locator('.table-section').evaluate((details) => details.open), false);
+  await page.frameLocator('#editor-frame').locator('p').first().click();
+  assert.equal(await page.locator('#table-add-row-above').isDisabled(), true);
+});
+
+test('focus mode adds editing space without losing selection or undo history', async (t) => {
+  const page = await pageFor(t, '<p>hello world</p>');
+  await liveSelect(page, 'p', 0, 5);
+  await color(page, 'text-color', '#ff0000');
+  const before = await html(page);
+  const height = (await page.locator('#workspace').boundingBox()).height;
+  await page.locator('#focus-mode').click();
+  assert.equal(await page.locator('#formatting-tools').isVisible(), false);
+  assert.equal(await page.locator('#focus-mode').getAttribute('aria-pressed'), 'true');
+  await page.waitForFunction((height) => document.getElementById('workspace').getBoundingClientRect().height > height, height);
+  assert.equal(await html(page), before);
+  assert.equal(await page.locator('#html-source').isVisible(), true);
+  assert.equal(await page.locator('#editor-frame').isVisible(), true);
+  await page.locator('#focus-mode').click();
+  await color(page, 'text-color', '#0000ff');
+  assert.equal(await page.frameLocator('#editor-frame').locator('span').textContent(), 'hello');
+  await page.locator('[data-cmd="undo"]').click();
+  assert.equal(await html(page), before);
+});
+
+test('small screens keep toolbar controls inside the viewport', async (t) => {
+  const page = await pageFor(t);
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    for (const inspector of [null, '.image-section', '.table-section']) {
+      if (inspector) await page.locator(inspector).evaluate((details) => { details.open = true; });
+      if (inspector === '.image-section') await page.locator('.image-advanced').evaluate((details) => { details.open = true; });
+      const overflows = await page.locator('.toolbar button, .toolbar input, .toolbar select').evaluateAll((controls) => controls.filter((control) => {
+        if (!control.checkVisibility()) return false;
+        const box = control.getBoundingClientRect();
+        return box.width > 0 && (box.x < 0 || box.right > innerWidth);
+      }).map((control) => control.id || control.textContent));
+      assert.deepEqual(overflows, [], `${width}px ${inspector || 'toolbar'}`);
+    }
+  }
+});

@@ -50,6 +50,20 @@ function clearSelectionTargets() {
   editor.querySelectorAll('[data-editor-selected]').forEach((node) => node.removeAttribute('data-editor-selected'));
   selectedImage = null;
   selectedCell = null;
+  syncInspectorState();
+}
+
+function syncInspectorState() {
+  byId('image-controls').disabled = !selectedImage;
+  byId('image-selection-hint').textContent = selectedImage
+    ? 'Image selected. Size fields accept px, %, rem, auto, and other CSS values.'
+    : 'Select an image in Live View to edit its properties.';
+  byId('table-selection-hint').textContent = selectedCell
+    ? 'Table selected. Cell fill applies to the selected cell; border and spacing apply to the table.'
+    : 'Insert a table, or select a cell in Live View to edit it.';
+  document.querySelectorAll('.table-tools button, .table-tools input, .table-tools select').forEach((control) => {
+    if (!['add-table', 'table-rows', 'table-cols'].includes(control.id)) control.disabled = !selectedCell;
+  });
 }
 
 function loadSource() {
@@ -227,10 +241,20 @@ function selectedElement() {
 }
 
 function setTargets(image, cell) {
+  const imageChanged = selectedImage !== image;
+  const cellChanged = selectedCell !== cell;
   clearSelectionTargets();
   if (image?.tagName === 'IMG' && editor.contains(image)) selectedImage = image;
   if (cell?.matches('td, th') && editor.contains(cell)) selectedCell = cell;
   (selectedImage || selectedCell)?.setAttribute('data-editor-selected', '');
+  syncInspectorState();
+  if (selectedImage && imageChanged) {
+    document.querySelector('.table-section').open = false;
+    document.querySelector('.image-section').open = true;
+  } else if (selectedCell && cellChanged) {
+    document.querySelector('.image-section').open = false;
+    document.querySelector('.table-section').open = true;
+  }
 }
 
 function selectFromRange() {
@@ -845,6 +869,7 @@ function initializeWorkspace() {
   const heightHandle = byId('workspace-resize');
   const stacked = window.matchMedia('(max-width: 980px)');
   const shortcuts = document.querySelector('.header-shortcuts');
+  const toolbar = byId('formatting-tools');
   let sourceShare = 52;
 
   function setShare(value) {
@@ -861,7 +886,24 @@ function initializeWorkspace() {
 
   function updateOrientation() {
     divider.setAttribute('aria-orientation', stacked.matches ? 'horizontal' : 'vertical');
+    fitWorkspace();
   }
+  function fitWorkspace() {
+    const top = workspace.getBoundingClientRect().top + window.scrollY;
+    const minimum = stacked.matches ? 480 : 360;
+    workspace.style.setProperty('--workspace-default-height', `${Math.min(1600, Math.max(minimum, window.innerHeight - top - 28))}px`);
+  }
+  const chromeObserver = new ResizeObserver(fitWorkspace);
+  chromeObserver.observe(document.querySelector('.app-header'));
+  chromeObserver.observe(toolbar);
+  window.addEventListener('resize', fitWorkspace);
+  byId('focus-mode').addEventListener('click', () => {
+    toolbar.hidden = !toolbar.hidden;
+    byId('focus-mode').setAttribute('aria-pressed', String(toolbar.hidden));
+    byId('focus-mode').textContent = toolbar.hidden ? 'Exit focus' : 'Focus';
+    byId('focus-mode').title = toolbar.hidden ? 'Show formatting tools' : 'Hide formatting tools for more editing space';
+    fitWorkspace();
+  });
   stacked.addEventListener('change', updateOrientation);
   updateOrientation();
   setShare(sourceShare);

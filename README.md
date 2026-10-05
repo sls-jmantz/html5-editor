@@ -20,6 +20,11 @@ download archive via `.gitattributes`.
 
 ## Editing
 
+The compact toolbar keeps everyday text formatting visible. Image and table
+settings expand when you select an image or table cell; you can also open them
+manually. **Focus** in the header hides the toolbar to give the editors more room.
+The workspace automatically fits the available screen space until you resize it.
+
 Keyboard shortcuts are available in the header. Each editor pane has a
 **Collapse/Expand** button. Drag the divider to resize their relative widths
 (heights on narrow screens), or drag the bottom handle to change workspace height.
