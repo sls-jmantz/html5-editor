@@ -838,3 +838,129 @@ source.value = serialize();
 source.wrap = 'soft';
 record();
 refreshHistoryButtons();
+
+function initializeWorkspace() {
+  const workspace = byId('workspace');
+  const divider = byId('pane-divider');
+  const heightHandle = byId('workspace-resize');
+  const stacked = window.matchMedia('(max-width: 980px)');
+  const shortcuts = document.querySelector('.header-shortcuts');
+  let sourceShare = 52;
+
+  function setShare(value) {
+    sourceShare = Math.max(20, Math.min(80, value));
+    workspace.style.setProperty('--source-share', `${sourceShare}fr`);
+    workspace.style.setProperty('--live-share', `${100 - sourceShare}fr`);
+    divider.setAttribute('aria-valuenow', String(Math.round(sourceShare)));
+    divider.setAttribute('aria-valuetext', `HTML Editor ${Math.round(sourceShare)}%, Live View ${Math.round(100 - sourceShare)}%`);
+  }
+
+  function setHeight(value) {
+    workspace.style.setProperty('--workspace-height', `${Math.max(320, Math.min(1600, value))}px`);
+  }
+
+  function updateOrientation() {
+    divider.setAttribute('aria-orientation', stacked.matches ? 'horizontal' : 'vertical');
+  }
+  stacked.addEventListener('change', updateOrientation);
+  updateOrientation();
+  setShare(sourceShare);
+  new ResizeObserver(() => {
+    const height = Math.round(workspace.getBoundingClientRect().height);
+    heightHandle.setAttribute('aria-valuenow', String(Math.max(320, Math.min(1600, height))));
+    heightHandle.setAttribute('aria-valuetext', `${height} pixels`);
+  }).observe(workspace);
+
+  for (const [name, title] of [['source', 'HTML Editor'], ['live', 'Live View']]) {
+    const panel = byId(`${name}-panel`);
+    const body = byId(`${name}-panel-body`);
+    const button = byId(`toggle-${name}-panel`);
+    button.addEventListener('click', () => {
+      clearTimeout(sizeTimer);
+      const collapsed = !body.hidden;
+      body.hidden = collapsed;
+      panel.classList.toggle('is-collapsed', collapsed);
+      workspace.classList.toggle(`${name}-collapsed`, collapsed);
+      button.textContent = collapsed ? 'Expand' : 'Collapse';
+      button.setAttribute('aria-expanded', String(!collapsed));
+      button.setAttribute('aria-label', `${collapsed ? 'Expand' : 'Collapse'} ${title}`);
+      const sourceHidden = byId('source-panel-body').hidden;
+      const liveHidden = byId('live-panel-body').hidden;
+      divider.hidden = sourceHidden || liveHidden;
+      heightHandle.hidden = sourceHidden && liveHidden;
+      // Toolbar commands should target the editing surface that is still visible.
+      if (sourceHidden && !liveHidden) surface = 'live';
+      if (liveHidden && !sourceHidden) surface = 'source';
+    });
+  }
+
+  function draggable(handle, start, move) {
+    let pointer = null;
+    let origin;
+    const stop = () => {
+      if (pointer === null) return;
+      const previous = pointer;
+      pointer = null;
+      document.body.classList.remove('is-resizing');
+      document.body.style.cursor = '';
+      if (handle.hasPointerCapture(previous)) handle.releasePointerCapture(previous);
+    };
+    handle.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || pointer !== null) return;
+      event.preventDefault();
+      handle.focus({ preventScroll: true });
+      pointer = event.pointerId;
+      origin = start(event);
+      handle.setPointerCapture(pointer);
+      document.body.classList.add('is-resizing');
+      document.body.style.cursor = getComputedStyle(handle).cursor;
+    });
+    handle.addEventListener('pointermove', (event) => {
+      if (event.pointerId === pointer) move(event, origin);
+    });
+    for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) handle.addEventListener(event, stop);
+    window.addEventListener('blur', stop);
+  }
+
+  draggable(divider, (event) => {
+    const rect = divider.getBoundingClientRect();
+    return stacked.matches ? event.clientY - rect.top : event.clientX - rect.left;
+  }, (event, grabOffset) => {
+    const rect = workspace.getBoundingClientRect();
+    const length = stacked.matches ? rect.height : rect.width;
+    const offset = stacked.matches ? event.clientY - rect.top : event.clientX - rect.left;
+    setShare(100 * (offset - grabOffset) / Math.max(1, length - 10));
+  });
+  draggable(heightHandle, (event) => ({ y: event.clientY, height: workspace.getBoundingClientRect().height }),
+    (event, origin) => setHeight(origin.height + event.clientY - origin.y));
+
+  divider.addEventListener('keydown', (event) => {
+    const decrease = stacked.matches ? 'ArrowUp' : 'ArrowLeft';
+    const increase = stacked.matches ? 'ArrowDown' : 'ArrowRight';
+    if (![decrease, increase, 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const step = event.shiftKey ? 10 : 2;
+    setShare(event.key === 'Home' ? 20 : event.key === 'End' ? 80 : sourceShare + (event.key === decrease ? -step : step));
+  });
+  heightHandle.addEventListener('keydown', (event) => {
+    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const step = event.shiftKey ? 100 : 20;
+    setHeight(event.key === 'Home' ? 320 : event.key === 'End' ? 1600 : workspace.getBoundingClientRect().height + (event.key === 'ArrowUp' ? -step : step));
+  });
+  divider.addEventListener('dblclick', () => setShare(52));
+  heightHandle.addEventListener('dblclick', () => workspace.style.removeProperty('--workspace-height'));
+
+  document.addEventListener('pointerdown', (event) => {
+    if (!shortcuts.contains(event.target)) shortcuts.open = false;
+  });
+  editorDocument.addEventListener('pointerdown', () => { shortcuts.open = false; });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && shortcuts.open) {
+      shortcuts.open = false;
+      shortcuts.querySelector('summary').focus();
+    }
+  });
+}
+
+initializeWorkspace();

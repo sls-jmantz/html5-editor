@@ -20,6 +20,12 @@ download archive via `.gitattributes`.
 
 ## Editing
 
+Keyboard shortcuts are available in the header. Each editor pane has a
+**Collapse/Expand** button. Drag the divider to resize their relative widths
+(heights on narrow screens), or drag the bottom handle to change workspace height.
+Focus either handle and use arrow keys to resize; double-click to reset its size.
+Collapsing a pane keeps its content and undo history intact.
+
 Select text to format it, or click an image to edit its dimensions, min/max sizes,
 padding, margin, alignment, float, border, corner radius, object fit/position,
 alternative text, title, and loading behavior. Expand **More image options** for

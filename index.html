@@ -19,6 +19,20 @@
         <p class="meta" id="save-status">Saved locally</p>
       </div>
       <div class="header-actions">
+        <details class="header-shortcuts">
+          <summary>Keyboard shortcuts</summary>
+          <div class="shortcut-note" aria-label="Keyboard shortcuts">
+            <span><kbd>Ctrl/Cmd+B</kbd> Bold</span>
+            <span><kbd>Ctrl/Cmd+I</kbd> Italic</span>
+            <span><kbd>Ctrl/Cmd+U</kbd> Underline</span>
+            <span><kbd>Ctrl/Cmd+K</kbd> Insert link</span>
+            <span><kbd>Ctrl/Cmd+S</kbd> Save locally</span>
+            <span><kbd>Ctrl/Cmd+Z</kbd> Undo</span>
+            <span><kbd>Ctrl/Cmd+Shift+Z</kbd> Redo</span>
+            <span><kbd>Ctrl/Cmd+Shift+7</kbd> Numbered list</span>
+            <span><kbd>Ctrl/Cmd+Shift+8</kbd> Bulleted list</span>
+          </div>
+        </details>
         <button id="copy-html" class="btn">Copy HTML</button>
         <button id="clear-editor" class="btn btn-danger">Clear</button>
       </div>
@@ -355,26 +369,28 @@
 
     </section>
 
-    <section class="workspace">
-      <article class="panel">
-        <h2>HTML Editor</h2>
-        <textarea id="html-source" class="output source-editor" aria-label="HTML source editor" spellcheck="false"></textarea>
+    <section id="workspace" class="workspace" aria-label="Editor workspace">
+      <article id="source-panel" class="panel">
+        <header class="panel-header">
+          <h2>HTML Editor</h2>
+          <button id="toggle-source-panel" class="panel-toggle" type="button" aria-label="Collapse HTML Editor" aria-expanded="true" aria-controls="source-panel-body">Collapse</button>
+        </header>
+        <div id="source-panel-body" class="panel-body">
+          <textarea id="html-source" class="output source-editor" aria-label="HTML source editor" spellcheck="false"></textarea>
+        </div>
       </article>
-
-      <article class="panel">
-        <h2>Live View</h2>
-        <iframe id="editor-frame" class="editor-frame" title="Rich text editor" sandbox="allow-same-origin"></iframe>
+      <div id="pane-divider" class="pane-divider" role="separator" tabindex="0" aria-label="Resize editor panes" aria-controls="source-panel live-panel" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="52" title="Drag to resize panes. Arrow keys resize; Home/End set limits; double-click resets."></div>
+      <article id="live-panel" class="panel">
+        <header class="panel-header">
+          <h2>Live View</h2>
+          <button id="toggle-live-panel" class="panel-toggle" type="button" aria-label="Collapse Live View" aria-expanded="true" aria-controls="live-panel-body">Collapse</button>
+        </header>
+        <div id="live-panel-body" class="panel-body">
+          <iframe id="editor-frame" class="editor-frame" title="Rich text editor" sandbox="allow-same-origin"></iframe>
+        </div>
       </article>
     </section>
-    <p class="shortcut-note" aria-label="Keyboard shortcuts">
-      Ctrl/Cmd+B = Bold<br>
-      Ctrl/Cmd+I = Italic<br>
-      Ctrl/Cmd+U = Underline<br>
-      Ctrl/Cmd+K = Insert link<br>
-      Ctrl/Cmd+S = Save locally<br>
-      Ctrl/Cmd+Shift+7 = Numbered list<br>
-      Ctrl/Cmd+Shift+8 = Bulleted list
-    </p>
+    <div id="workspace-resize" class="workspace-resize" role="separator" tabindex="0" aria-label="Resize workspace height" aria-controls="workspace" aria-orientation="horizontal" aria-valuemin="320" aria-valuemax="1600" aria-valuenow="600" title="Drag to change editor height. Up/Down resize; double-click resets."></div>
   </main>
 
   <script type="module" src="script.js"></script>

@@ -346,3 +346,98 @@ test('storage failures are reported without stopping editor initialization or ed
   assert.match(await page.locator('#save-status').textContent(), /Could not save locally/);
   assert.equal(await page.frameLocator('#editor-frame').locator('p').textContent(), 'still editable');
 });
+
+test('shortcuts are accessible in the header and dismiss with Escape', async (t) => {
+  const page = await pageFor(t);
+  const shortcuts = page.locator('.app-header .header-shortcuts');
+  await shortcuts.locator('summary').click();
+  assert.equal(await shortcuts.locator('.shortcut-note').isVisible(), true);
+  assert.match(await shortcuts.textContent(), /Ctrl\/Cmd\+Shift\+8/);
+  assert.equal(await page.locator('.app-shell > .shortcut-note').count(), 0);
+  await page.keyboard.press('Escape');
+  assert.equal(await shortcuts.evaluate((details) => details.open), false);
+});
+
+test('each editor can collapse and expand without losing content or edit history', async (t) => {
+  const page = await pageFor(t, '<p>hello</p>');
+  await liveSelect(page, 'p');
+  const liveBefore = await page.locator('#live-panel').boundingBox();
+  await page.locator('#toggle-source-panel').click();
+  assert.equal(await page.locator('#html-source').isVisible(), false);
+  assert.equal(await page.locator('#toggle-source-panel').getAttribute('aria-expanded'), 'false');
+  assert.equal(await page.locator('#pane-divider').isVisible(), false);
+  assert.ok((await page.locator('#live-panel').boundingBox()).width > liveBefore.width);
+  await color(page, 'text-color', '#0000ff');
+  assert.match(await html(page), /rgb\(0, 0, 255\)/);
+  await page.locator('#toggle-source-panel').click();
+  assert.equal(await page.locator('#html-source').isVisible(), true);
+  await page.locator('#toggle-live-panel').click();
+  assert.equal(await page.locator('#editor-frame').isVisible(), false);
+  await page.locator('#toggle-source-panel').click();
+  assert.ok((await page.locator('#workspace').boundingBox()).height < 160);
+  assert.equal(await page.locator('#workspace-resize').isVisible(), false);
+  await page.locator('#toggle-source-panel').click();
+  await page.locator('#toggle-live-panel').click();
+  assert.equal(await page.locator('#pane-divider').isVisible(), true);
+  assert.match(await html(page), /rgb\(0, 0, 255\)/);
+  await page.locator('[data-cmd="undo"]').click();
+  assert.equal(await html(page), '<p>hello</p>');
+});
+
+test('desktop panes resize by dragging across the iframe and by keyboard', async (t) => {
+  const page = await pageFor(t, '<p>resize me</p>');
+  const divider = page.locator('#pane-divider');
+  await divider.scrollIntoViewIfNeeded();
+  const before = await page.locator('#source-panel').boundingBox();
+  const handle = await divider.boundingBox();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 120, handle.y + handle.height / 2, { steps: 8 });
+  await page.mouse.up();
+  assert.ok((await page.locator('#source-panel').boundingBox()).width > before.width + 80);
+  assert.equal(await page.locator('body').evaluate((body) => body.classList.contains('is-resizing')), false);
+  assert.equal(await page.locator('#editor-frame').evaluate((frame) => getComputedStyle(frame).pointerEvents), 'auto');
+  await divider.press('Home');
+  assert.equal(await divider.getAttribute('aria-valuenow'), '20');
+  await divider.press('ArrowRight');
+  assert.equal(await divider.getAttribute('aria-valuenow'), '22');
+  await divider.dblclick();
+  assert.equal(await divider.getAttribute('aria-valuenow'), '52');
+  const heightHandle = page.locator('#workspace-resize');
+  const heightBefore = (await page.locator('#workspace').boundingBox()).height;
+  await heightHandle.press('Shift+ArrowDown');
+  assert.ok((await page.locator('#workspace').boundingBox()).height >= heightBefore + 99);
+  await heightHandle.scrollIntoViewIfNeeded();
+  const edge = await heightHandle.boundingBox();
+  const expandedHeight = (await page.locator('#workspace').boundingBox()).height;
+  await page.mouse.move(edge.x + edge.width / 2, edge.y + edge.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(edge.x + edge.width / 2, edge.y - 80, { steps: 8 });
+  await page.mouse.up();
+  assert.ok((await page.locator('#workspace').boundingBox()).height < expandedHeight - 50);
+  await heightHandle.dblclick();
+  assert.ok(Math.abs((await page.locator('#workspace').boundingBox()).height - heightBefore) < 1);
+  assert.equal(await html(page), '<p>resize me</p>');
+});
+
+test('stacked panes resize vertically and collapsed editors continue syncing', async (t) => {
+  const page = await pageFor(t, '<p>original</p>');
+  await page.setViewportSize({ width: 720, height: 900 });
+  const divider = page.locator('#pane-divider');
+  await page.waitForFunction(() => document.getElementById('pane-divider').getAttribute('aria-orientation') === 'horizontal');
+  assert.equal(await divider.getAttribute('aria-orientation'), 'horizontal');
+  const before = (await page.locator('#source-panel').boundingBox()).height;
+  await divider.press('ArrowDown');
+  assert.ok((await page.locator('#source-panel').boundingBox()).height > before);
+  const sourceBox = await page.locator('#source-panel').boundingBox();
+  const liveBox = await page.locator('#live-panel').boundingBox();
+  assert.ok(liveBox.y > sourceBox.y + sourceBox.height);
+  await page.locator('#toggle-live-panel').click();
+  await page.locator('#html-source').fill('<p>edited while hidden</p>');
+  await page.locator('#toggle-live-panel').click();
+  assert.equal(await page.frameLocator('#editor-frame').locator('p').textContent(), 'edited while hidden');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.waitForFunction(() => document.getElementById('pane-divider').getAttribute('aria-orientation') === 'vertical');
+  assert.equal(await divider.getAttribute('aria-orientation'), 'vertical');
+  assert.equal(await divider.getAttribute('aria-valuenow'), '54');
+});
