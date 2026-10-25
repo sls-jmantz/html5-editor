@@ -26,6 +26,7 @@ let selectedCell = null;
 let sourceSelection = [0, 0];
 let saveTimer;
 let sizeTimer;
+let toastTimer;
 let mutating = false;
 let history = [];
 let historyIndex = -1;
@@ -33,6 +34,18 @@ let historyIndex = -1;
 function status(message, saved = false) {
   byId('save-status').textContent = message;
   byId('save-status').classList.toggle('saved', saved);
+}
+
+function showClipboardToast(message, isError = false) {
+  const toast = byId('clipboard-toast');
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.toggle('is-error', isError);
+  toast.classList.add('is-visible');
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('is-visible');
+    toast.textContent = '';
+  }, isError ? 6000 : 3000);
 }
 
 function serialize() {
@@ -764,8 +777,10 @@ on('clear-editor', 'click', () => change(() => {
 on('copy-html', 'click', async () => {
   try {
     await navigator.clipboard.writeText(source.value);
-    status('HTML copied', true);
-  } catch { status('Clipboard unavailable. Select and copy the HTML source.'); }
+    showClipboardToast('HTML copied to clipboard');
+  } catch {
+    showClipboardToast('Could not copy. Select and copy the HTML source manually.', true);
+  }
 });
 on('wrap-toggle', 'change', () => {
   source.classList.toggle('no-wrap', !byId('wrap-toggle').checked);
