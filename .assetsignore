@@ -1,0 +1,7 @@
+# Only these browser assets belong in a Workers static-assets deployment.
+# Keep the root-directory site without uploading dependencies or tooling.
+*
+!/index.html
+!/styles.css
+!/script.js
+!/editor-core.js

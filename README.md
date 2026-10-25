@@ -3,6 +3,55 @@
 A plain HTML/CSS/JavaScript editor with editable source, a sandboxed visual view,
 local saving, and undo/redo. No build step, backend, or runtime dependencies.
 
+## Deploy from Git on Cloudflare
+
+### Existing connection using `npx wrangler deploy`
+
+A log containing **"Executing user deploy command: npx wrangler deploy"** is a
+**Workers Builds** connection. This repository supports that configuration as a
+static-assets-only Worker:
+
+| Setting | Value |
+| --- | --- |
+| Worker name | `html5-editor` |
+| Production branch | `main` |
+| Root directory | Repository root |
+| Build command | Leave blank |
+| Deploy command | `npm run deploy` (existing `npx wrangler deploy` also works) |
+
+`wrangler.jsonc` configures the site explicitly, so deployment does not run an
+interactive setup wizard. `.assetsignore` allows only the four browser files;
+`node_modules`, Git data, tests, and deployment configuration are not uploaded.
+Wrangler's initial file count is the number scanned **before** these exclusions.
+Wrangler is version-pinned in `package.json` and the lockfile. Cloudflare can run
+its normal dependency installation. No `dist` folder or generated ZIP is used.
+
+To check this deployment locally without publishing:
+
+```sh
+npm ci
+npm run check:deploy
+npm run test:deploy
+```
+
+### Cloudflare Pages Git connection
+
+Choose **Pages → Connect to Git**, rather than creating a Worker, and use:
+
+| Setting | Value |
+| --- | --- |
+| Production branch | `main` |
+| Framework preset | None |
+| Root directory | Repository root |
+| Build command | `exit 0` |
+| Build output directory | `.` |
+| Environment variable | `SKIP_DEPENDENCY_INSTALL=1` (production and preview) |
+
+Pages deploys the root files directly; it does **not** need a Wrangler deploy
+command. Skipping dependency installation keeps development dependencies out of
+the root-directory Pages upload. The Worker configuration above is for the
+Workers Builds flow; use the dashboard's output-directory setting for Pages.
+
 ## Deploy manually to Cloudflare Pages
 
 1. On GitHub, select **Code → Download ZIP**.
